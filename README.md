@@ -174,15 +174,52 @@ jupyter notebook data_validation.ipynb
 | Development       | Jupyter Notebook            | Exploratory analysis and validation     |
 
 
-##  Team
+## 👥 Team  
+**Team GenAI — ENIGMA Hackathon 2.0**
 
-**Team GenAI — ENIGMA Hackathon 2.0 **
+<table>
+<tr>
 
-| Name               | GitHub Username  | Profile Link                        | Role           |
-| ------------------ | ---------------- | ----------------------------------- | -------------- |
-| Pranay Suryawanshi | pranay-surya     | https://github.com/pranay-surya     | Lead Developer |
-| Bhavesh Hatwar     | Bhatwar195       | https://github.com/Bhatwar195       | Team Member    |
-| Bhuvan Bhonde      | BhuvanBhonde712  | https://github.com/BhuvanBhonde712  | Team Member    |
-| Nirjara Khante     | nirjarakhante    | https://github.com/nirjarakhante    | Team Member    |
-| Sanskruti Harne    | SanskrutiHarne72 | https://github.com/SanskrutiHarne72 | Team Member    |
+<td align="center">
+<a href="https://github.com/pranay-surya">
+<img src="https://github.com/pranay-surya.png" width="110px;" alt="Pranay Suryawanshi"/><br />
+<sub><b>Pranay Suryawanshi</b></sub>
+</a><br />
+<sub>Lead Developer</sub>
+</td>
+
+<td align="center">
+<a href="https://github.com/Bhatwar195">
+<img src="https://github.com/Bhatwar195.png" width="110px;" alt="Bhavesh Hatwar"/><br />
+<sub><b>Bhavesh Hatwar</b></sub>
+</a><br />
+<sub>Team Member</sub>
+</td>
+
+<td align="center">
+<a href="https://github.com/BhuvanBhonde712">
+<img src="https://github.com/BhuvanBhonde712.png" width="110px;" alt="Bhuvan Bhonde"/><br />
+<sub><b>Bhuvan Bhonde</b></sub>
+</a><br />
+<sub>Team Member</sub>
+</td>
+
+<td align="center">
+<a href="https://github.com/nirjarakhante">
+<img src="https://github.com/nirjarakhante.png" width="110px;" alt="Nirjara Khante"/><br />
+<sub><b>Nirjara Khante</b></sub>
+</a><br />
+<sub>Team Member</sub>
+</td>
+
+<td align="center">
+<a href="https://github.com/SanskrutiHarne72">
+<img src="https://github.com/SanskrutiHarne72.png" width="110px;" alt="Sanskruti Harne"/><br />
+<sub><b>Sanskruti Harne</b></sub>
+</a><br />
+<sub>Team Member</sub>
+</td>
+
+</tr>
+</table>
 
