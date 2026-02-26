@@ -76,17 +76,22 @@ def extract_features(epochs):
                 if ep == 0:
                     feature_names.extend([f"{ch}_{band}_abs", f"{ch}_{band}_rel"])
 
-        # 2. Band ratios (per channel)
+        # 2. Band ratios (per channel) — always emit both values to keep vector length stable
         for ch_idx, ch in enumerate(ch_names):
-            theta_abs = ep_features[ch_idx * 10 + 2]   # index: delta_abs,delta_rel,theta_abs,...
+            theta_abs = ep_features[ch_idx * 10 + 2]
             alpha_abs = ep_features[ch_idx * 10 + 4]
             delta_abs = ep_features[ch_idx * 10]
 
             if alpha_abs > 1e-12:
-                ep_features.append(theta_abs / alpha_abs)
-                ep_features.append(delta_abs / alpha_abs)
-                if ep == 0:
-                    feature_names.extend([f"{ch}_theta_alpha_ratio", f"{ch}_delta_alpha_ratio"])
+                theta_alpha = theta_abs / alpha_abs
+                delta_alpha = delta_abs / alpha_abs
+            else:
+                theta_alpha = 0.0
+                delta_alpha = 0.0
+
+            ep_features.extend([theta_alpha, delta_alpha])
+            if ep == 0:
+                feature_names.extend([f"{ch}_theta_alpha_ratio", f"{ch}_delta_alpha_ratio"])
 
         # 3. Asymmetry (selected pairs & bands)
         for left_ch, right_ch in ASYMMETRY_PAIRS:
@@ -130,21 +135,30 @@ def load_or_train_model():
 
 
 def predict_risk(epochs):
+    print("[DEBUG] Starting predict_risk")
     features, feat_names = extract_features(epochs)
+    print(f"[DEBUG] Extracted {len(features)} features, {len(feat_names)} names")
 
-    model, scaler, saved_names = load_or_train_model()
+    try:
+        model, scaler, saved_names = load_or_train_model()
+        print(f"[DEBUG] Loaded model expecting {len(saved_names)} features")
+    except Exception as e:
+        print(f"[DEBUG] Model load failed: {e}")
+        raise
 
-    # Safety check
     if len(features) != len(saved_names):
+        print(f"[ERROR] Feature mismatch! Expected {len(saved_names)}, got {len(features)}")
+        print("First 10 feat_names:", feat_names[:10])
         raise ValueError(f"Feature count mismatch. Expected {len(saved_names)}, got {len(features)}")
 
+    # Scale and predict
     X = scaler.transform(features.reshape(1, -1))
-    proba = model.predict_proba(X)[0]
-    risk_score = float(proba[1]) * 100.0
+    risk_prob  = model.predict_proba(X)[0, 1]          # P(schizophrenia)
+    risk_score = float(risk_prob * 100.0)               # 0-100 %
 
-    # Feature importance (if available)
-    importances = model.feature_importances_ if hasattr(model, "feature_importances_") else None
+    importances = getattr(model, "feature_importances_", None)
 
+    print(f"[DEBUG] Risk score: {risk_score:.1f}%")
     return risk_score, features, feat_names, importances
 
 
@@ -194,14 +208,54 @@ def train_on_aszed():
     acc = accuracy_score(y_val, pred_proba > 0.5)
     print(f"Validation AUC: {auc:.3f} | Accuracy: {acc:.3f}")
 
-    # Save
+    # Save model and scaler
     os.makedirs("models", exist_ok=True)
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(clf, f)
     with open(SCALER_PATH, "wb") as f:
         pickle.dump(scaler, f)
-    # Save feature names (from your extract_features on first file)
-    # For simplicity: run extract_features on one file and save names
-    # Or hard-code if stable
 
-    print("Model retrained and saved using ASZED data.")
+    # Save feature names — load them from the pre-saved .npy file produced by prepare_aszed_training.py
+    names_npy = "./data/processed_aszed/feature_names.npy"
+    if os.path.exists(names_npy):
+        feat_names = list(np.load(names_npy, allow_pickle=True))
+    else:
+        # Fallback: derive names by running extract_features on a dummy 1-epoch signal
+        from eeg_processor import generate_synthetic_eeg
+        dummy_epochs = generate_synthetic_eeg(n_epochs=2)
+        _, feat_names = extract_features(dummy_epochs)
+
+    with open(FEATURE_NAMES_PATH, "wb") as f:
+        pickle.dump(feat_names, f)
+
+    print(f"Model retrained and saved using ASZED data. Feature count: {len(feat_names)}")
+
+def create_placeholder_model():
+    """Quick dummy model to unblock the UI – scores will be random until real training."""
+    import numpy as np
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import StandardScaler
+    import pickle
+    import os
+
+    # Match observed feature count (253 from your log)
+    n_features = 253
+    X_dummy = np.random.randn(200, n_features)
+    y_dummy = np.random.randint(0, 2, 200)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_dummy)
+
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_scaled, y_dummy)
+
+    os.makedirs("models", exist_ok=True)
+    with open("models/schizophrenia_rf_model.pkl", "wb") as f:
+        pickle.dump(model, f)
+    with open("models/schizophrenia_scaler.pkl", "wb") as f:
+        pickle.dump(scaler, f)
+    with open("models/feature_names.pkl", "wb") as f:
+        fake_names = [f"ch_band_{i}" for i in range(n_features)]
+        pickle.dump(fake_names, f)
+
+    print("Placeholder model saved. Restart uvicorn — demo should now show a risk score.")
